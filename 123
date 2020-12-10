@@ -1,2 +1,66 @@
-123
-456
+import requests
+from bs4 import BeautifulSoup
+url1_doc = requests.get("https://www.thespruceeats.com/a-to-z-cocktail-recipes-3962886")  # 對網站發出請求，並儲存回傳的html
+soup1 = BeautifulSoup(url1_doc.text, "html.parser")  # 利用BeautifulSoup解析html
+if url1_doc.status_code == 200:  # confirm status is successful
+    cocktails = {}  # 記錄所有cocktail的資料
+    for ul in soup1.findAll("ul", {"class": "comp text-passage ordered-list__content-description mntl-sc-block mntl-sc-block-html"}):
+        cocktail = {}  # {name, total prepared time, rating times, rating, steps, ingredients}
+        for li in ul.findAll("li"):
+            # step1: find name and base wine
+            cocktail["name"] = li.text.split("(")[-2]
+            cocktail["base_wine"] = li.text.split("(")[-1].split(")")[0]
+
+            # step2: go to next page, including recipes and other information
+            url2_doc = requests.get(li.find("a")['href'])
+            soup2 = BeautifulSoup(url2_doc.text, "html.parser")
+
+            # step3: how much is total prepared time?
+            for total_prepared_time in (soup2.find("div", {"class": "loc total-time project-meta__total-time"})).find("span", {"class": "meta-text__data"}):
+                cocktail["total_prepared_time"] = total_prepared_time  # 準備酒的時間
+
+            # step4: how many people rate the cocktail?
+            rating_times = soup2.find("div", {"class": "comp aggregate-star-rating__count mntl-aggregate-rating mntl-text-block"}).string.split(" ")[0]
+            cocktail["rating_times"] = rating_times
+
+            # step5: rating
+            m = 0
+            for active in soup2.find("div", {"class": "comp aggregate-star-rating__stars mntl-aggregate-star-rating mntl-rating"}).select("a.active"):
+                m = m + 1
+            for half in soup2.find("div", {"class": "comp aggregate-star-rating__stars mntl-aggregate-star-rating mntl-rating"}).select("a.half"):
+                m = m + 0.5
+            cocktail["rating"] = m
+
+            # step6: count steps
+            n = 0
+            for i in soup2.findAll("li", {"class": "comp mntl-sc-block-group--LI mntl-sc-block mntl-sc-block-startgroup"}):
+                n = n + 1
+            cocktail["steps"] = n
+
+            # step7: ingredients
+            quantifiers = ["ounces", "ounce", "dashes", "dash", "Garnish: 1", "Garnish: 2", "Garnish:", "Garnish: 1 slice"]  # 複數要擺前面
+            ingredient = []
+
+            p = 0
+            for ingredients in soup2.findAll("li", {"class": "simple-list__item js-checkbox-trigger ingredient text-passage"}):
+                tmp = ingredients.text
+                for quantifier in quantifiers:
+                    if quantifier in tmp:
+                        tmp = tmp.split(quantifier)[-1]  # 分割量詞
+                        break  # 分割一次就停止，量詞通常只有一個
+                # 處理材料後的括弧及括弧內的形容詞
+                if '(' in tmp:
+                    tmp = tmp.split('(')[0]
+                elif '(' in ingredient:
+                    tmp = tmp.split(')')[0]
+                # 簡單處理or，選前面的
+                if ' or ' in tmp:  # or前後要有空白
+                    tmp = tmp.split('or')[0]
+                ingredient.append(tmp)  # ['\n1 ounce Southern Comfort\n', '\n1 ounce amaretto\n']
+
+            cocktail["ingredient"] = ingredient
+            print(cocktail)
+            print(" ")
+            # next 把資料存在資料庫，利用SQL確認查詢
+            # line bot flash message
+
