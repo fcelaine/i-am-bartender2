@@ -40,8 +40,6 @@ if url1_doc.status_code == 200:  # confirm status is successful
             # step7: ingredients
             quantifiers = ["ounces", "ounce", "dashes", "dash", "Garnish: 1", "Garnish: 2", "Garnish:", "Garnish: 1 slice"]  # 複數要擺前面
             ingredient = []
-
-            p = 0
             for ingredients in soup2.findAll("li", {"class": "simple-list__item js-checkbox-trigger ingredient text-passage"}):
                 tmp = ingredients.text
                 for quantifier in quantifiers:
