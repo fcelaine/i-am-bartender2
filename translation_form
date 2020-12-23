@@ -1,6 +1,6 @@
-#轉換資料型態
 f = open('/Users/genevieve/ccClub/程式碼/cocktail_recipes.txt','r')
 
+#轉換資料型態
 lst = []
 for line in f:
     line = line.strip().strip('{').strip('}')
@@ -11,17 +11,18 @@ for line in f:
     line = line.split(',')
     tmp = {}
     for s in line[:6]:
-        (key, value) = s.replace(' ','').split(':')
+        (key, value) = s.split(':')
+        key = key.strip().replace(' ', '')
+        value = value.strip()
         tmp[key] = value
     for s in line[6:]:
         if line.index(s) == 6:
             s = s.replace('[', '').replace(']', '')
             (key, value) = s.split(':')
-            key = key.strip()
+            key = key.strip().replace(' ', '')
             value = value.strip()
             tmp[key] = [value]
         else :
-            s = s.strip().replace('[', '').replace(']', '')
+            s = s.strip().replace('[', '').replace(']', '').replace('(', '').replace(')', '')
             tmp['ingredient'].append(s)
     lst.append(tmp)
-print(lst)
