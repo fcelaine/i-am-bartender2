@@ -1,0 +1,297 @@
+f = open('/Users/genevieve/ccClub/程式碼/cocktails_recipes_1223.txt','r')
+import random
+
+#轉換資料型態
+lst = []
+for line in f:
+    line = line.strip().strip('{').strip('}')
+    line = line.split('\'')
+    for s in line:
+        s = s.strip()
+    line = ''.join(line).lower()
+    line = line.split(',')
+    tmp = {}
+    for s in line[:6]:
+        (key, value) = s.split(':')
+        key = key.strip().replace(' ', '').replace('\"', '')
+        value = value.strip().replace('\"', '')
+        tmp[key] = value
+    for s in line[6:]:
+        if line.index(s) == 6:
+            s = s.replace('[', '').replace(']', '')
+            (key, value) = s.split(':')
+            key = key.strip().replace(' ', '').replace('\"', '')
+            value = value.strip().replace('\"', '')
+            tmp[key] = [value]
+        else :
+            s = s.strip().replace('[', '').replace(']', '').replace('(', '').replace(')', '').replace('\"', '')
+            tmp['ingredient'].append(s)
+    lst.append(tmp)
+
+#最少步驟list
+least_step_lst = []
+tmp_lst = sorted(lst, key = lambda x: int(x['steps']))
+for i in range(5):
+    least_step_lst.append(tmp_lst[i])
+for dic in tmp_lst:
+    if int(dic['steps']) == int(least_step_lst[-1]['steps']) and dic not in least_step_lst:
+        least_step_lst.append(dic)
+        
+#最少時間list
+least_time_lst = []
+tmp_lst = sorted(lst, key = lambda x: int(x['total_prepared_time(min)']))
+for i in range(5):
+    least_time_lst.append(tmp_lst[i])
+for dic in tmp_lst:
+    if int(dic['total_prepared_time(min)']) == int(least_time_lst[-1]['total_prepared_time(min)']) and dic not in least_time_lst:
+        least_time_lst.append(dic)
+        
+#大眾品味list／小眾品味list
+best_rating_lst = []
+tmp_lst = sorted(lst,reverse = True, key = lambda x: float(x['rating']))
+for i in range(5):
+    best_rating_lst.append(tmp_lst[i])
+for dic in tmp_lst:
+    if float(dic['rating']) == float(best_rating_lst[-1]['rating']) and dic not in best_rating_lst:
+        best_rating_lst.append(dic)
+majority_best_rating_lst = sorted(best_rating_lst,reverse = True, key = lambda x: float(x['rating_times']))[:5]
+minority_best_rating_lst = sorted(best_rating_lst, key = lambda x: float(x['rating_times']))[:5]
+
+#基酒酒種list
+base_wine_lst = []
+for dic in lst:
+    if dic['base_wine'] not in base_wine_lst:
+        base_wine_lst.append(dic['base_wine'])
+    else:
+        continue
+
+while True:
+    try:
+        yes_no = int(input('請問你是否已具備基酒？（1：有／0：無）')) #Q1
+        if yes_no == 0:
+            ingredient_lst = []
+            while True:
+                try:
+                    s = input('請輸入已有材料(小寫英文Ex.lemon，若輸入完成請輸入end)：')
+                    if s == 'end':
+                        break
+                    else:
+                        ingredient_lst.append(s)
+                        continue
+                except:
+                    break
+            while True:
+                try:
+                    what_type_alcoholic = int(input('請問你是哪種類型的酒鬼？（1：懶惰型／2：沒耐性型／3：大眾品味型／4：小眾品味型／5：佛系型）')) #Q3
+                    if what_type_alcoholic == 1:
+                        tmp_lst = random.sample(least_step_lst, k = 5)
+                        for line in tmp_lst:
+                            print()
+                            print('酒種名稱：', line['name'])
+                            ans = set(line['ingredient']) - set(ingredient_lst)
+                            print('購物清單：', sorted(list(ans)))
+                            print()
+                        break
+                    elif what_type_alcoholic == 2:
+                        tmp_lst = random.sample(least_time_lst, k = 5)
+                        for line in tmp_lst:
+                            print()
+                            print('酒種名稱：', line['name'])
+                            ans = set(line['ingredient']) - set(ingredient_lst)
+                            print('購物清單：', sorted(list(ans)))
+                            print()
+                        break
+                    elif what_type_alcoholic == 3:
+                        for line in majority_best_rating_lst:
+                            print()
+                            print('酒種名稱：', line['name'])
+                            ans = set(line['ingredient']) - set(ingredient_lst)
+                            print('購物清單：', sorted(list(ans)))
+                            print()
+                        break
+                    elif what_type_alcoholic == 4:
+                        for line in minority_best_rating_lst:
+                            print()
+                            print('酒種名稱：', line['name'])
+                            ans = set(line['ingredient']) - set(ingredient_lst)
+                            print('購物清單：', sorted(list(ans)))
+                            print()
+                        break
+                    elif what_type_alcoholic == 5:
+                        tmp_lst = random.sample(lst, k = 5)
+                        for line in tmp_lst:
+                            print()
+                            print('酒種名稱：', line['name'])
+                            ans = set(line['ingredient']) - set(ingredient_lst)
+                            print('購物清單：', sorted(list(ans)))
+                            print()
+                        break
+                    else:
+                        print('錯誤輸入，請再輸入一次。')
+                        continue
+                except:
+                    print('錯誤輸入，請再輸入一次。')
+                    continue
+            break
+        elif yes_no == 1:
+            while True:
+                try:
+                    what_type_base_wine = input('請問是哪種基酒？(小寫英文 Ex.vodka)') #Q2
+                    if what_type_base_wine not in base_wine_lst:
+                        print('錯誤輸入，請再輸入一次。')
+                        continue
+                    else:
+                        break
+                except:
+                    print('錯誤輸入，請再輸入一次。')
+                    continue
+            while True:
+                try:
+                    how_many_step = int(input('請問你能接受的準備步驟？（1：≦3步／2：4~6步／3：7~9步／4：10~12步／5：≧13步）')) #Q4
+                    if how_many_step not in range(1,6):
+                        print('錯誤輸入，請再輸入一次。')
+                        continue
+                    else:
+                        break
+                except:
+                    print('錯誤輸入，請再輸入一次。')
+                    continue
+            while True:
+                try:
+                    how_much_time = int(input('請問你能接受的準備時間？（1：≦3分鐘／2：4~6分鐘／3：7~9分鐘／4：10~12分鐘／5：≧13分鐘）')) #Q5
+                    if how_much_time not in range(1,6):
+                        print('錯誤輸入，請再輸入一次。')
+                        continue
+                    else:
+                        break
+                except:
+                    print('錯誤輸入，請再輸入一次。')
+                    continue
+            while True:
+                try:
+                    how_many_rating_times = int(input('請問你能接受的最少評價人次？（1：10人／2：20人／3：30人／4：40人／5：50人）')) #Q6
+                    if how_many_rating_times not in range(1,6):
+                        print('錯誤輸入，請再輸入一次。')
+                        continue
+                    else:
+                        break
+                except:
+                    print('錯誤輸入，請再輸入一次。')
+                    continue
+            while True:
+                try:
+                    how_many_star = int(input('請問你能接受的最低評價等級？（1：1星／2：2星／3：3星／4：4星／5：5星）')) #Q7
+                    if how_many_star not in range(1,6):
+                        print('錯誤輸入，請再輸入一次。')
+                        continue
+                    else:
+                        break
+                except:
+                    print('錯誤輸入，請再輸入一次。')
+                    continue
+            
+            for dic in lst:
+                dic['score'] = 0
+                if dic['base_wine'] == what_type_base_wine:
+                    dic['score'] += 300
+                else:
+                    dic['score'] -= 300
+                if int(dic['steps']) <= 3:
+                    tmp = 1
+                elif int(dic['steps']) >= 4 and int(dic['steps']) <= 6:
+                    tmp = 2
+                elif int(dic['steps']) >= 7 and int(dic['steps']) <= 9:
+                    tmp = 3
+                elif int(dic['steps']) >= 10 and int(dic['steps']) <= 12:
+                    tmp = 4
+                else:
+                    tmp = 5
+                if tmp == how_many_step:
+                    dic['score'] += 80
+                else:
+                    dic['score'] -= abs(tmp - how_many_step) * 20
+                if int(dic['total_prepared_time(min)']) <= 3:
+                    tmp = 1
+                elif int(dic['total_prepared_time(min)']) >= 4 and int(dic['total_prepared_time(min)']) <= 6:
+                    tmp = 2
+                elif int(dic['total_prepared_time(min)']) >= 7 and int(dic['total_prepared_time(min)']) <= 9:
+                    tmp = 3
+                elif int(dic['total_prepared_time(min)']) >= 10 and int(dic['total_prepared_time(min)']) <= 12:
+                    tmp = 4
+                else:
+                    tmp = 5
+                if tmp == how_much_time:
+                    dic['score'] += 80
+                else:
+                    dic['score'] -= abs(tmp - how_much_time) * 20
+                if int(dic['rating_times']) < 10:
+                    tmp = 0
+                elif int(dic['rating_times']) >= 10 and int(dic['rating_times']) < 20:
+                    tmp = 1
+                elif int(dic['rating_times']) >= 20 and int(dic['rating_times']) < 30:
+                    tmp = 2
+                elif int(dic['rating_times']) >= 30 and int(dic['rating_times']) < 40:
+                    tmp = 3
+                elif int(dic['rating_times']) >= 40 and int(dic['rating_times']) < 50:
+                    tmp = 4
+                else:
+                    tmp = 5
+                if tmp >= how_many_rating_times:
+                    dic['score'] += 50
+                else:
+                    dic['score'] -= abs(tmp - how_many_rating_times) * 10
+                if float(dic['rating']) < 1:
+                    tmp = 0
+                elif float(dic['rating']) >= 1 and float(dic['rating']) < 2:
+                    tmp = 1
+                elif float(dic['rating']) >= 2 and float(dic['rating']) < 3:
+                    tmp = 2
+                elif float(dic['rating']) >= 3 and float(dic['rating']) < 4:
+                    tmp = 3
+                elif float(dic['rating']) >= 4 and float(dic['rating']) < 5:
+                    tmp = 4
+                else:
+                    tmp = 5
+                if tmp >= how_many_star:
+                    dic['score'] += 50
+                else:
+                    dic['score'] -= abs(tmp - how_many_star) * 10
+        
+            recommend_lst = sorted(lst, reverse = True, key = lambda x: float(x['score']))[:5]
+            ans_lst = []
+            for dic in lst:
+                if dic['score'] == recommend_lst[-1]['score'] and dic not in recommend_lst:
+                    recommend_lst.append(dic)
+            for dic in recommend_lst:
+                if dic['score'] > recommend_lst[-1]['score']:
+                    ans_lst.append(dic)
+                    recommend_lst.remove(dic)
+            tmp_lst = random.sample(recommend_lst, k = 5 - len(ans_lst))
+            ans_lst.extend(tmp_lst)
+    
+            ingredient_lst = []
+            ingredient_lst.append(what_type_base_wine)
+            while True:
+                try:
+                    s = input('請輸入已有材料(小寫英文Ex.lemon，若輸入完成請輸入end)：')
+                    if s == 'end':
+                        break
+                    else:
+                        ingredient_lst.append(s)
+                        continue
+                except:
+                    break
+    
+            for dic in ans_lst:
+                print()
+                print('酒種名稱：', dic['name'])
+                ans = set(dic['ingredient']) - set(ingredient_lst)
+                print('購物清單：', sorted(list(ans)))
+                print()
+            break
+        else:
+            print('錯誤輸入，請再輸入一次。')
+            continue
+    except:
+        print('錯誤輸入，請再輸入一次。')
+        continue
